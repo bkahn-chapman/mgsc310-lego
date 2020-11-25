@@ -1,0 +1,405 @@
+---
+title: "MGSC 310 - Final Project"
+author: "Grace Montgomery and Ben Kahn"
+subtitle: MGSC 310 Problem Set Template
+output:
+  html_document:
+    df_print: paged
+  html_notebook: default
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+# As long as you are working in a Rstudio Project file, you shouldn't need to 'hard code' directories like this 
+# change to your own working directory
+# knitr::opts_knit$set(root.dir = 'C:/Users/hersh/Dropbox/Chapman/Teaching/MGSC_310/Fall_2019/problem_sets')
+# setwd('C:/Users/hersh/Dropbox/Chapman/Teaching/MGSC_310/Fall_2019/problem_sets')
+
+# set seed to your own favorite number
+set.seed(1818)
+options(width=70)
+options(scipen=99)
+rm(list = ls())
+
+
+# general rchunk code options
+
+# this sets text to small
+opts_chunk$set(tidy.opts=list(width.wrap=50),tidy=TRUE, size = "vsmall")  
+opts_chunk$set(message = FALSE,                                          
+               warning = FALSE,
+               # "caching" stores objects in code chunks and only rewrites if you change things
+               cache = TRUE,                               
+               # automatically downloads dependency files
+               autodep = TRUE,
+               # 
+               cache.comments = FALSE,
+               # 
+               collapse = TRUE,
+               fig.width = 5,  
+               fig.height = 4,
+               fig.align='center')
+
+
+```
+
+a) 
+
+Here is the link to the dataset: https://www.kaggle.com/mterzolo/lego-sets/download
+
+```{r}
+lego_sets <- read.csv(here::here("datasets", "lego_sets.csv"))
+lego_sets
+```
+
+b) 
+
+The outcome we are trying to predict is the list_price.
+
+The variables we will use to predict it are listed below:
+ages, piece count, num_reviews, play_star_rating, review_difficulty, star_rating, val_star_rating, and country.
+
+
+c) 
+
+The motivation for our product is determining the list_price, because if we can determine what the price of a Lego set will be, we can figure out which types of sets will give us the most revenue, or from the perspective of the buyer, what types of sets give the best value.  We also plan to use an ENet model to determine which variables are most influential to the list_price of the data set.
+
+d)
+
+The methods we will be using to analyze our question:
+
+1. Linear regression
+2. Enet model to determine lasso vs. ridge
+3. Depending on which one enet decides, use that
+
+e) 
+
+Group members: Ben Kahn and Grace Montgomery
+
+f) 
+
+```{r}
+summary(lego_sets)
+```
+
+Example Cleaning code from Pset5
+```{r}
+library("tidyverse")
+# options(scipen = 50)
+# set.seed(1861)
+# movies <- read.csv(here::here("datasets", "IMDB_movies.csv"))
+# movies <- movies %>% filter(budget < 4e+08) %>% filter(content_rating != 
+#     "", content_rating != "Not Rated", plot_keywords != "", !is.na(gross))
+# movies <- movies %>% mutate(genre_main = unlist(map(strsplit(as.character(movies$genres), 
+#     "\\|"), 1)), plot_main = unlist(map(strsplit(as.character(movies$plot_keywords), 
+#     "\\|"), 1)), grossM = gross/1e+06, budgetM = budget/1e+06)
+# movies <- movies %>% mutate(genre_main = fct_lump(genre_main, 
+#     7), plot_first = fct_lump(plot_main, 20), content_rating = fct_lump(content_rating, 
+#     4), country = fct_lump(country, 8), language = fct_lump(language, 
+#     4), cast_total_facebook_likes000s = cast_total_facebook_likes/1000) %>% 
+#     drop_na()
+# 
+# top_director <- movies %>% group_by(director_name) %>% summarize(num_films = n()) %>% 
+#     top_frac(0.1) %>% mutate(top_director = 1) %>% select(-num_films)
+# 
+# movies <- movies %>% left_join(top_director, by = "director_name") %>% 
+#     mutate(top_director = replace_na(top_director, 0)) %>% select(-c(director_name, 
+#     actor_2_name, gross, genres, actor_1_name, movie_title, actor_3_name, 
+#     plot_keywords, movie_imdb_link, budget, color, aspect_ratio, 
+#     plot_main, actor_3_facebook_likes, actor_2_facebook_likes, 
+#     color, num_critic_for_reviews, num_voted_users, num_user_for_reviews, 
+#     actor_2_facebook_likes))
+# 
+# sapply(movies %>% select_if(is.factor), table)
+# 
+# library("rsample")
+# 
+# movies_split <- initial_split(movies, p = 0.75)
+# 
+# movies_train <- training(movies_split)
+# movies_test <- testing(movies_split)
+```
+
+Clean the dataset
+- need to factor:
+    ages > but this has 31 factors, we may need to do some cleaning
+    review difficulty
+- remove variables we are not going to use
+- create a training and testing set
+- TAKE OUT AGES OR FIX SINCE THERE ARE SO MANY FACTORS
+    
+```{r}
+
+library(magrittr)
+library('rsample')
+library('tidyverse')
+
+lego_clean <- lego_sets %>% select(-c(prod_long_desc,theme_name,prod_desc,set_name)) %>% mutate(
+  ages = factor(ages), review_difficulty = factor(review_difficulty), country = factor(country)
+) %>% drop_na()
+
+lego_clean
+  # movies <- movies %>% mutate(genre_main = fct_lump(genre_main, 
+#     7), plot_first = fct_lump(plot_main, 20), content_rating = fct_lump(content_rating, 
+#     4), country = fct_lump(country, 8), language = fct_lump(language, 
+#     4), cast_total_facebook_likes000s = cast_total_facebook_likes/1000) %>% 
+#     drop_na()
+
+# sum(is.na(lego_clean$num_reviews)) #this had some values
+# 
+# sum(is.na(lego_clean$review_difficulty)) #when i looked, it looked like this was missing values but it says its not
+
+lego_split <- initial_split(lego_clean, p = 0.75)
+
+lego_train <- training(lego_split)
+lego_test <- testing(lego_split)
+
+
+```
+
+```{r}
+sum(is.na(lego_clean$piece_count))
+
+```
+
+
+```{r}
+
+# lego_sets %<>% as.factor('review_difficulty' = review_difficulty)
+
+
+mod1 <- lm(list_price ~ ages + piece_count + num_reviews + play_star_rating + review_difficulty + star_rating + val_star_rating + country, 
+           data = lego_train)
+
+mod2 <- lm(list_price ~ piece_count,
+           data = lego_train)
+
+
+
+```
+
+
+
+
+
+
+```{r}
+
+#and other factor manipulation
+
+# predictions
+preds_train1 <- predict(mod1,
+                     newdata = lego_train)
+preds_train2 <- predict(mod2,
+                        newdata = lego_train)
+# preds_test <- predict(mod1,
+#                      newdata = lego_test)
+```
+
+
+```{r}
+
+# Dataframe and plot examples
+results_train <- data.frame(
+  preds = preds_train1,
+  true = lego_train$list_price
+)
+ggplot(results_train, 
+       aes(x = true, y = preds)) +
+  geom_point(alpha = 1/2, size = 4) +
+  geom_abline(color = "red")
+
+# Dataframe and plot examples
+results_train2 <- data.frame(
+  preds = preds_train2,
+  true = lego_train$list_price
+)
+ggplot(results_train2, 
+       aes(x = true, y = preds)) +
+  geom_point(alpha = 1/2, size = 4) +
+  geom_abline(color = "red")
+
+
+```
+
+```{r}
+library('ISLR')
+
+
+glm_mod1 <- glm(list_price ~ ages + piece_count + num_reviews + play_star_rating + review_difficulty + star_rating + 
+                  val_star_rating + country, 
+           data = lego_train)
+# Logit examples
+# set family = binomial to set logistic function
+# logit_fit1 <- glm(default ~ student,
+#                   family = binomial,
+#                   data = Default)
+
+```
+
+
+```{r}
+preds_train_glm <- predict(glm_mod1,
+                     newdata = lego_train)
+
+```
+
+
+
+```{r}
+# Dataframe and plot examples
+results_train_glm <- data.frame(
+  preds = preds_train_glm,
+  true = lego_train$list_price
+)
+ggplot(results_train_glm, 
+       aes(x = true, y = preds)) +
+  geom_point(alpha = 1/2, size = 4) +
+  geom_smooth(color = "red")
+
+
+```
+```{r}
+library('yardstick')
+library('ggplot2')
+library('plotROC')
+
+# p <- ggplot(results_train_glm, 
+#             aes(m = preds, d = true)) + 
+#   geom_roc(labelsize = 3.5, 
+#            cutoffs.at = 
+#              c(0.99,0.9,0.7,0.5,0.3,0.1,0)) +
+#   theme_minimal(base_size = 16)
+# print(p)
+
+```
+
+
+```{r}
+summary(glm_mod1)
+
+```
+```{r}
+summary(mod1)
+```
+
+
+```{r}
+
+
+library('tidyverse')
+library('rsample')
+library('glmnet')
+library('glmnetUtils')
+library('forcats')
+library('broom') #this one is the one we added
+
+# Lasso Model
+
+# note cv.glmnet automatically performs k-fold cross-validation 
+# lasso_mod <- cv.glmnet(hwy ~ .,
+#                        data = mpg_clean,
+#                        # note alpha = 1 sets Lasso!
+#                        alpha = 1)
+enet_mod <- cva.glmnet(list_price ~ ages + piece_count + num_reviews + play_star_rating + review_difficulty + star_rating + 
+                  val_star_rating + country, 
+           data = lego_train,
+                       alpha = seq(0,1, by = 0.05))
+
+plot(enet_mod)
+```
+
+```{r}
+
+
+minlossplot(enet_mod, 
+            cv.type = "min")
+```
+
+>> so we determine that this is a lasso mod
+
+
+```{r}
+lasso_mod <- cv.glmnet(list_price ~ ages + piece_count + num_reviews + play_star_rating + review_difficulty + star_rating + 
+                  val_star_rating + country, 
+                  data = lego_train,
+                  alpha = 1)
+
+plot(lasso_mod)
+
+
+```
+
+
+```{r}
+library(coefplot)
+coefpath(lasso_mod)
+
+```
+```{r}
+print(lasso_mod$lambda.1se)
+coef(lasso_mod, 
+     s = lasso_mod$lambda.min)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+------more chunks
+
+
+
+```{r}
+library('yardstick')
+library('ggplot2')
+library('plotROC')
+
+# p <- ggplot(results_train_glm, 
+#             aes(m = preds, d = true)) + 
+#   geom_roc(labelsize = 3.5, 
+#            cutoffs.at = 
+#              c(0.99,0.9,0.7,0.5,0.3,0.1,0)) +
+#   theme_minimal(base_size = 16)
+# print(p)
+
+```
+
+
+
+```{r}
+
+
+```
+
+```{r}
+
+
+```
+
+```{r}
+
+
+```
+
+```{r}
+
+
+```
+
+```{r}
+
+
+```
+
