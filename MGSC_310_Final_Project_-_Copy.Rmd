@@ -2,10 +2,9 @@
 title: "MGSC 310 - Final Project"
 author: "Grace Montgomery and Ben Kahn"
 subtitle: MGSC 310 Problem Set Template
-output:
-  html_document:
-    df_print: paged
-  html_notebook: default
+html_document:
+  df_print: paged
+html_notebook: default
 ---
 
 ```{r setup, include=FALSE}
@@ -48,7 +47,7 @@ a)
 Here is the link to the dataset: https://www.kaggle.com/mterzolo/lego-sets/download
 
 ```{r}
-lego_sets <- read.csv(here::here("datasets", "lego_sets.csv"))
+lego_sets <- read.csv("lego_sets.csv")
 lego_sets
 ```
 
