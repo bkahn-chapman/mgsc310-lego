@@ -2,9 +2,10 @@
 title: "MGSC 310 - Final Project"
 author: "Grace Montgomery and Ben Kahn"
 subtitle: MGSC 310 Problem Set Template
-html_document:
-  df_print: paged
-html_notebook: default
+output:
+  html_document:
+    df_print: paged
+  html_notebook: default
 ---
 
 ```{r setup, include=FALSE}
