@@ -276,8 +276,10 @@ library('plotROC')
 
 
 ```{r}
-summary(glm_mod1)
 
+summary(glm_mod1)
+table(lego_train$ages)
+table(lego_train$country)
 ```
 ```{r}
 summary(mod1)
