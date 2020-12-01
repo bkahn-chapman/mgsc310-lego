@@ -1,0 +1,193 @@
+---
+title: "MGSC 310 Final Project Rough Draft"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+
+
+
+
+
+
+
+
+```{r}
+
+library(magrittr)
+library('rsample')
+library('tidyverse')
+
+lego_clean <- lego_sets %>% select(-c(prod_long_desc,theme_name,prod_desc,set_name)) %>% mutate(
+  ages = factor(ages), review_difficulty = factor(review_difficulty), country = factor(country)
+) %>% drop_na()
+
+lego_clean
+  # movies <- movies %>% mutate(genre_main = fct_lump(genre_main, 
+#     7), plot_first = fct_lump(plot_main, 20), content_rating = fct_lump(content_rating, 
+#     4), country = fct_lump(country, 8), language = fct_lump(language, 
+#     4), cast_total_facebook_likes000s = cast_total_facebook_likes/1000) %>% 
+#     drop_na()
+
+# sum(is.na(lego_clean$num_reviews)) #this had some values
+# 
+# sum(is.na(lego_clean$review_difficulty)) #when i looked, it looked like this was missing values but it says its not
+
+lego_split <- initial_split(lego_clean, p = 0.75)
+
+lego_train <- training(lego_split)
+lego_test <- testing(lego_split)
+
+
+```
+
+
+```{r}
+library('ISLR')
+
+
+glm_mod1 <- glm(list_price ~ ages + piece_count + num_reviews + play_star_rating + review_difficulty + star_rating + 
+                  val_star_rating + country, 
+           data = lego_train)
+# Logit examples
+# set family = binomial to set logistic function
+# logit_fit1 <- glm(default ~ student,
+#                   family = binomial,
+#                   data = Default)
+
+```
+
+```{r}
+preds_train_glm <- predict(glm_mod1,
+                     newdata = lego_train)
+
+```
+
+```{r}
+# Dataframe and plot examples
+results_train_glm <- data.frame(
+  preds = preds_train_glm,
+  true = lego_train$list_price
+)
+ggplot(results_train_glm, 
+       aes(x = true, y = preds)) +
+  geom_point(alpha = 1/2, size = 4) +
+  geom_smooth(color = "red")
+
+
+```
+```{r}
+library('yardstick')
+library('ggplot2')
+library('plotROC')
+
+# p <- ggplot(results_train_glm, 
+#             aes(m = preds, d = true)) + 
+#   geom_roc(labelsize = 3.5, 
+#            cutoffs.at = 
+#              c(0.99,0.9,0.7,0.5,0.3,0.1,0)) +
+#   theme_minimal(base_size = 16)
+# print(p)
+
+```
+
+```{r}
+
+
+library('tidyverse')
+library('rsample')
+library('glmnet')
+library('glmnetUtils')
+library('forcats')
+library('broom') #this one is the one we added
+
+# Lasso Model
+
+# note cv.glmnet automatically performs k-fold cross-validation 
+# lasso_mod <- cv.glmnet(hwy ~ .,
+#                        data = mpg_clean,
+#                        # note alpha = 1 sets Lasso!
+#                        alpha = 1)
+enet_mod <- cva.glmnet(list_price ~ ages + piece_count + num_reviews + play_star_rating + review_difficulty + star_rating + 
+                  val_star_rating + country, 
+           data = lego_train,
+                       alpha = seq(0,1, by = 0.05))
+
+plot(enet_mod)
+```
+
+```{r}
+
+
+minlossplot(enet_mod, 
+            cv.type = "min")
+```
+
+>> so we determine that this is a lasso mod
+
+
+```{r}
+lasso_mod <- cv.glmnet(list_price ~ ages + piece_count + num_reviews + play_star_rating + review_difficulty + star_rating + 
+                  val_star_rating + country, 
+                  data = lego_train,
+                  alpha = 1)
+
+plot(lasso_mod)
+
+
+```
+
+
+```{r}
+library(coefplot)
+coefpath(lasso_mod)
+
+```
+```{r}
+print(lasso_mod$lambda.1se)
+coef(lasso_mod, 
+     s = lasso_mod$lambda.min)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
