@@ -4,7 +4,38 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
+# As long as you are working in a Rstudio Project file, you shouldn't need to 'hard code' directories like this 
+# change to your own working directory
+# knitr::opts_knit$set(root.dir = 'C:/Users/hersh/Dropbox/Chapman/Teaching/MGSC_310/Fall_2019/problem_sets')
+# setwd('C:/Users/hersh/Dropbox/Chapman/Teaching/MGSC_310/Fall_2019/problem_sets')
+
+# set seed to your own favorite number
+set.seed(1818)
+options(width=70)
+options(scipen=99)
+rm(list = ls())
+
+
+# general rchunk code options
+
+# this sets text to small
+opts_chunk$set(tidy.opts=list(width.wrap=50),tidy=TRUE, size = "vsmall")  
+opts_chunk$set(message = FALSE,                                          
+               warning = FALSE,
+               # "caching" stores objects in code chunks and only rewrites if you change things
+               cache = TRUE,                               
+               # automatically downloads dependency files
+               autodep = TRUE,
+               # 
+               cache.comments = FALSE,
+               # 
+               collapse = TRUE,
+               fig.width = 5,  
+               fig.height = 4,
+               fig.align='center')
+
+
 ```
 
 ## R Markdown
