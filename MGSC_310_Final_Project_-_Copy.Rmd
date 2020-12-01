@@ -48,7 +48,7 @@ a)
 Here is the link to the dataset: https://www.kaggle.com/mterzolo/lego-sets/download
 
 ```{r}
-lego_sets <- read.csv(here::here("datasets", "lego_sets.csv"))
+lego_sets <- read.csv("lego_sets.csv")
 lego_sets
 ```
 
