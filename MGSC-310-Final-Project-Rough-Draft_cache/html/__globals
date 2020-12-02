@@ -1,0 +1,11 @@
+unnamed-chunk-1	library
+unnamed-chunk-2	%>%	ages	c	country	drop_na	factor	initial_split	mutate	prod_desc	prod_long_desc	read.csv	review_difficulty	select	set_name	testing	theme_name	training
+unnamed-chunk-3	~	glm	lego_train
+unnamed-chunk-4	glm_mod	lego_train	predict
+unnamed-chunk-5	$	data.frame	lego_train	preds_train_glm
+unnamed-chunk-6	aes	geom_point	geom_smooth	ggplot	preds	results_train_glm	true
+unnamed-chunk-7	metrics	preds	results_train_glm	true
+unnamed-chunk-8	~	cva.glmnet	lego_train	plot	seq
+unnamed-chunk-9	enet_mod	minlossplot
+unnamed-chunk-10	~	cv.glmnet	lego_train	plot
+unnamed-chunk-11	coefpath	lasso_mod	library
