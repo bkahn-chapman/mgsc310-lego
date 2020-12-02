@@ -16,7 +16,6 @@ options(width=70)
 options(scipen=99)
 rm(list = ls())
 
-
 # general rchunk code options
 
 # this sets text to small
@@ -34,8 +33,6 @@ opts_chunk$set(message = FALSE,
                fig.width = 5,  
                fig.height = 4,
                fig.align='center')
-
-
 ```
 
 ### Importing Libraries
@@ -55,8 +52,7 @@ library('broom')
 
 ```
 
-### Cleaning the dataset and Creating training and testing data sets (working on clustering ages and countries together to help the model perform better by the time we submit our final project)
-
+### Cleaning the dataset and creating training and testing data sets (working on clustering ages and countries together to help the model perform better by the time we submit our final project)
 ```{r}
 lego_sets <- read.csv("lego_sets.csv")
 
@@ -142,30 +138,4 @@ library(coefplot)
 coefpath(lasso_mod)
 ```
 It appears that the 'ages' variable is the most influential to the model because it shrinks last.
-
-
-#### SHOULD WE KEEP THIS?
-
-```{r}
-print(lasso_mod$lambda.1se)
-coef(lasso_mod, 
-     s = lasso_mod$lambda.min)
-```
-
-## THESE FACTORS WILL BE CLEANED UP AS WE REFINE OUR MODEL
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
