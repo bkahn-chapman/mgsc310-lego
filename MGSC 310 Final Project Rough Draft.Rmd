@@ -38,103 +38,76 @@ opts_chunk$set(message = FALSE,
 
 ```
 
-
+### Importing Libraries
 ```{r}
-
 library(magrittr)
 library('rsample')
 library('tidyverse')
+library('ISLR')
+library('yardstick')
+library('ggplot2')
+library('plotROC')
+library('rsample')
+library('glmnet')
+library('glmnetUtils')
+library('forcats')
+library('broom')
+
+```
+
+### Cleaning the dataset and Creating training and testing data sets
+
+```{r}
+lego_sets <- read.csv("lego_sets.csv")
 
 lego_clean <- lego_sets %>% select(-c(prod_long_desc,theme_name,prod_desc,set_name)) %>% mutate(
   ages = factor(ages), review_difficulty = factor(review_difficulty), country = factor(country)
 ) %>% drop_na()
 
-lego_clean
-  # movies <- movies %>% mutate(genre_main = fct_lump(genre_main, 
-#     7), plot_first = fct_lump(plot_main, 20), content_rating = fct_lump(content_rating, 
-#     4), country = fct_lump(country, 8), language = fct_lump(language, 
-#     4), cast_total_facebook_likes000s = cast_total_facebook_likes/1000) %>% 
-#     drop_na()
-
-# sum(is.na(lego_clean$num_reviews)) #this had some values
-# 
-# sum(is.na(lego_clean$review_difficulty)) #when i looked, it looked like this was missing values but it says its not
-
 lego_split <- initial_split(lego_clean, p = 0.75)
-
 lego_train <- training(lego_split)
 lego_test <- testing(lego_split)
-
-
 ```
 
-
+### Creating a GLM model
 ```{r}
-library('ISLR')
-
-
-glm_mod1 <- glm(list_price ~ ages + piece_count + num_reviews + play_star_rating + review_difficulty + star_rating + 
+glm_mod <- glm(list_price ~ ages + piece_count + num_reviews + play_star_rating + review_difficulty + star_rating + 
                   val_star_rating + country, 
            data = lego_train)
-# Logit examples
-# set family = binomial to set logistic function
-# logit_fit1 <- glm(default ~ student,
-#                   family = binomial,
-#                   data = Default)
-
 ```
 
+### Generating predictions
 ```{r}
-preds_train_glm <- predict(glm_mod1,
-                     newdata = lego_train)
-
+preds_train_glm <- predict(glm_mod,
+                          newdata = lego_train)
 ```
 
+### Creating a results data frame
 ```{r}
-# Dataframe and plot examples
 results_train_glm <- data.frame(
   preds = preds_train_glm,
   true = lego_train$list_price
 )
+```
+
+### Plotting the true and predicted values
+```{r}
 ggplot(results_train_glm, 
        aes(x = true, y = preds)) +
   geom_point(alpha = 1/2, size = 4) +
   geom_smooth(color = "red")
-
-
-```
-```{r}
-library('yardstick')
-library('ggplot2')
-library('plotROC')
-
-# p <- ggplot(results_train_glm, 
-#             aes(m = preds, d = true)) + 
-#   geom_roc(labelsize = 3.5, 
-#            cutoffs.at = 
-#              c(0.99,0.9,0.7,0.5,0.3,0.1,0)) +
-#   theme_minimal(base_size = 16)
-# print(p)
-
 ```
 
+### Evaluating the metrics
 ```{r}
+metrics(results_train_glm, preds, true)
+```
+
+Can we get better error rates with a different model?
 
 
-library('tidyverse')
-library('rsample')
-library('glmnet')
-library('glmnetUtils')
-library('forcats')
-library('broom') #this one is the one we added
-
-# Lasso Model
-
-# note cv.glmnet automatically performs k-fold cross-validation 
-# lasso_mod <- cv.glmnet(hwy ~ .,
-#                        data = mpg_clean,
-#                        # note alpha = 1 sets Lasso!
-#                        alpha = 1)
+### Enet Model
+```{r}
 enet_mod <- cva.glmnet(list_price ~ ages + piece_count + num_reviews + play_star_rating + review_difficulty + star_rating + 
                   val_star_rating + country, 
            data = lego_train,
@@ -143,16 +116,16 @@ enet_mod <- cva.glmnet(list_price ~ ages + piece_count + num_reviews + play_star
 plot(enet_mod)
 ```
 
+
+### Minloss plot to determine Lasso vs. Ridge
 ```{r}
-
-
 minlossplot(enet_mod, 
             cv.type = "min")
 ```
 
->> so we determine that this is a lasso mod
+We determine that this is a lasso model because there is the least amount of error when alpha is equal to 1.  This means that only a few of the variables we chose are highly influential to the model.
 
-
+### Creating the Lasso Model
 ```{r}
 lasso_mod <- cv.glmnet(list_price ~ ages + piece_count + num_reviews + play_star_rating + review_difficulty + star_rating + 
                   val_star_rating + country, 
@@ -160,21 +133,23 @@ lasso_mod <- cv.glmnet(list_price ~ ages + piece_count + num_reviews + play_star
                   alpha = 1)
 
 plot(lasso_mod)
-
-
 ```
+lambda.1se does not increase the mean-squared error much compared to lambda.min.  As such, we would choose the lambda.1se value for lambda in order to increase the shrinkage in our model.
 
-
+### Which variables are the most influential?
 ```{r}
 library(coefplot)
 coefpath(lasso_mod)
-
 ```
+It appears that the 'ages' variable is the most influential to the model because it shrinks last.
+
+
+#### SHOULD WE KEEP THIS?
+
 ```{r}
 print(lasso_mod$lambda.1se)
 coef(lasso_mod, 
      s = lasso_mod$lambda.min)
-
 ```
 
 
