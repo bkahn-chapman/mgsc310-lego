@@ -55,7 +55,7 @@ library('broom')
 
 ```
 
-### Cleaning the dataset and Creating training and testing data sets
+### Cleaning the dataset and Creating training and testing data sets (working on clustering ages and countries together to help the model perform better by the time we submit our final project)
 
 ```{r}
 lego_sets <- read.csv("lego_sets.csv")
@@ -152,7 +152,7 @@ coef(lasso_mod,
      s = lasso_mod$lambda.min)
 ```
 
-
+## THESE FACTORS WILL BE CLEANED UP AS WE REFINE OUR MODEL
 
 
 
