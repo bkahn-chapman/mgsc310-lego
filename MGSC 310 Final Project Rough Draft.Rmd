@@ -49,20 +49,36 @@ library('glmnet')
 library('glmnetUtils')
 library('forcats')
 library('broom')
-
 ```
 
 ### Cleaning the dataset and creating training and testing data sets (working on clustering ages and countries together to help the model perform better by the time we submit our final project)
 ```{r}
 lego_sets <- read.csv("lego_sets.csv")
 
-lego_clean <- lego_sets %>% select(-c(prod_long_desc,theme_name,prod_desc,set_name)) %>% mutate(
-  ages = factor(ages), review_difficulty = factor(review_difficulty), country = factor(country)
+lego_clean <- lego_sets %>% select(-c(prod_long_desc,theme_name,prod_desc,set_name)) %>% 
+  mutate(
+  # ages = factor(ages), 
+  review_difficulty = factor(review_difficulty), 
+  country = factor(country)
 ) %>% drop_na()
+# 
+# lego_split <- initial_split(lego_clean, p = 0.75)
+# lego_train <- training(lego_split)
+# lego_test <- testing(lego_split)
+```
 
-lego_split <- initial_split(lego_clean, p = 0.75)
-lego_train <- training(lego_split)
-lego_test <- testing(lego_split)
+### Inspecting the data set
+```{r}
+lego_clean
+
+lego_clean %>% glimpse()
+
+summary(lego_clean)
+
+
+```
+```{r}
+group_by(lego_train$ages)
 ```
 
 ### Creating a GLM model
