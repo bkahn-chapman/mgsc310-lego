@@ -57,14 +57,14 @@ lego_sets <- read.csv("lego_sets.csv")
 
 lego_clean <- lego_sets %>% select(-c(prod_long_desc,theme_name,prod_desc,set_name)) %>% 
   mutate(
-  # ages = factor(ages), 
+  ages = factor(ages),
   review_difficulty = factor(review_difficulty), 
   country = factor(country)
 ) %>% drop_na()
-# 
-# lego_split <- initial_split(lego_clean, p = 0.75)
-# lego_train <- training(lego_split)
-# lego_test <- testing(lego_split)
+
+lego_split <- initial_split(lego_clean, p = 0.75)
+lego_train <- training(lego_split)
+lego_test <- testing(lego_split)
 ```
 
 ### Inspecting the data set
@@ -78,12 +78,20 @@ summary(lego_clean)
 
 ```
 ```{r}
-group_by(lego_train$ages)
+
+lego_clean %>% group_by(ages)
+
+ggplot(lego_clean, aes(ages)) + 
+  geom_bar() +
+  coord_flip()
+#should we keep this graph?
+
 ```
 
 ### Creating a GLM model
 ```{r}
-glm_mod <- glm(list_price ~ ages + piece_count + num_reviews + play_star_rating + review_difficulty + star_rating + 
+glm_mod <- glm(list_price ~ ages + piece_count + num_reviews + play_star_rating + 
+                 review_difficulty + star_rating + 
                   val_star_rating + country, 
            data = lego_train)
 ```
@@ -120,9 +128,10 @@ Can we get better error rates with a different model?
 
 ### Enet Model
 ```{r}
-enet_mod <- cva.glmnet(list_price ~ ages + piece_count + num_reviews + play_star_rating + review_difficulty + star_rating + 
-                  val_star_rating + country, 
-           data = lego_train,
+enet_mod <- cva.glmnet(list_price ~ ages + piece_count + num_reviews + 
+                         play_star_rating + review_difficulty + star_rating + 
+                         val_star_rating + country, 
+                         data = lego_train,
                        alpha = seq(0,1, by = 0.05))
 
 plot(enet_mod)
@@ -154,4 +163,46 @@ library(coefplot)
 coefpath(lasso_mod)
 ```
 It appears that the 'ages' variable is the most influential to the model because it shrinks last.
+
+
+
+
+### Generating predictions for lasso
+```{r}
+preds_train_lasso <- predict(lasso_mod,
+                          newdata = lego_train)
+```
+
+### Creating a results data frame
+```{r}
+results_train_lasso <- data.frame(
+  preds = preds_train_lasso,
+  true = lego_train$list_price
+)
+```
+
+
+
+```{r}
+metrics(results_train_lasso, X1, true)
+# fix this, for some reason preds is X1
+
+```
+
+```{r}
+ggplot(results_train_lasso, 
+       aes(x = true, y = X1)) +
+  geom_point(alpha = 1/2, size = 4) +
+  geom_smooth(color = "red")
+```
+
+The graph looks the same?
+
+There are outliers on both graphs, should we talk about those? also, it looksl ike there are some predictions that level off around $400 when the real value is 900.  What could cause this?
+
+
+
+
+
+metrics(results_train_glm, preds, true)
 
