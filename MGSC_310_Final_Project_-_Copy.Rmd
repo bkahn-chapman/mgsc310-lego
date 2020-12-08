@@ -348,17 +348,95 @@ coef(lasso_mod,
 ```
 
 
+## using the testing data set to generate predictions
+### Generating Testing predictions
+```{r}
+preds_test_glm <- predict(glm_mod,
+                          newdata = lego_test)
+```
+
+### Creating a results data frame
+```{r}
+results_test_glm <- data.frame(
+  preds = preds_test_glm,
+  true = lego_train$list_price
+)
+```
+
+### Plotting the true and predicted values
+```{r}
+ggplot(results_test_glm, 
+       aes(x = true, y = preds)) +
+  geom_point(alpha = 1/2, size = 4) +
+  geom_smooth(color = "red")
+```
+
+### Evaluating the metrics
+```{r}
+metrics(results_test_glm, preds, true)
+```
+#make sure we talk about in-bag vs. out of bag predictions
 
 
 
+# ------------------- this code needs to be replaced
+#### Generating predictions for lasso
+```{r}
+preds_train_lasso <- predict(lasso_mod,
+                          newdata = lego_train)
+
+preds_test_lasso <- predict(lasso_mod,
+                            newdata = lego_test)
+```
+
+#### Creating a results data frame
+```{r}
+results_train_lasso <- data.frame(
+  preds = preds_train_lasso,
+  true = lego_train$list_price
+) %>%   rename(`preds` = 1, `true` = 2)
+
+results_test_lasso <- data.frame(
+  preds = preds_test_lasso,
+  true = lego_train$list_price
+) %>%   rename(`preds` = 1, `true` = 2)
+```
 
 
+#### Evaluating Lasso train and test metrics
+```{r}
+metrics(results_train_lasso, X1, true) #replace X1 with preds
+# fix this, for some reason preds is X1
 
+metrics(results_test_lasso, preds, true)
 
+```
 
+#### Plotting the lasso train results
+```{r}
+ggplot(results_train_lasso, 
+       aes(x = true, y = X1)) +
+  geom_point(alpha = 1/2, size = 4) +
+  geom_smooth(color = "red")
+```
 
+#### Plotting the lasso test results
+```{r}
+ggplot(results_test_lasso, 
+       aes(x = true, y = X1)) +
+  geom_point(alpha = 1/2, size = 4) +
+  geom_smooth(color = "red")
+```
 
+## Need to change all the '###' to '####'
 
+-- I used this to show the issue with ages
+```{r}
+
+coef(ridge_mod, s = ridge_mod$lambda.min) %>% 
+  round(3)
+
+```
 
 
 ------more chunks
