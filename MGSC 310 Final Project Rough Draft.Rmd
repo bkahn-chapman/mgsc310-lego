@@ -240,6 +240,7 @@ We determine that this is a lasso model because there is the least amount of err
 lasso_mod <- cv.glmnet(list_price ~ minage + piece_count + num_reviews + play_star_rating + review_difficulty + star_rating + val_star_rating + country, 
                   data = lego_train,
                   alpha = 1)
+plot(lasso_mod)
 
 ```
 lambda.1se does not increase the mean-squared error much compared to lambda.min.  As such, we would choose the lambda.1se value for lambda in order to increase the shrinkage in our model.
@@ -253,7 +254,7 @@ lasso_1se = coef(lasso_mod, s = lasso_mod$lambda.1se) %>%
 
 print(lasso_1se)
 
-lasso_1se %>% filter(`X1` != 0) %>% nrow()
+lasso_1se %>% filter(`X1` != 0) %>% view()
 
 library(coefplot)
 coefpath(lasso_mod)
