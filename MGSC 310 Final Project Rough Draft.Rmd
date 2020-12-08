@@ -241,14 +241,23 @@ lasso_mod <- cv.glmnet(list_price ~ minage + piece_count + num_reviews + play_st
                   data = lego_train,
                   alpha = 1)
 
-plot(lasso_mod)
 ```
 lambda.1se does not increase the mean-squared error much compared to lambda.min.  As such, we would choose the lambda.1se value for lambda in order to increase the shrinkage in our model.
 
+
 ### Which variables are the most influential?
 ```{r}
+
+lasso_1se = coef(lasso_mod, s = lasso_mod$lambda.1se) %>% 
+    as.matrix() %>% data.frame() %>% round(3)
+
+print(lasso_1se)
+
+lasso_1se %>% filter(`X1` != 0) %>% nrow()
+
 library(coefplot)
 coefpath(lasso_mod)
+
 ```
 It appears that the 'ages' variable is the most influential to the model because it shrinks last.
 
