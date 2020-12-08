@@ -206,3 +206,18 @@ There are outliers on both graphs, should we talk about those? also, it looksl i
 
 metrics(results_train_glm, preds, true)
 
+
+```{r}
+
+table(lego_clean$country)
+table(lego_clean$ages)
+
+```
+
+```{r}
+
+
+
+```
+
+

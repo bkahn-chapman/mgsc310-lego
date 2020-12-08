@@ -45,7 +45,7 @@ opts_chunk$set(message = FALSE,
 
 a) 
 
-Here is the link to the dataset: https://www.kaggle.com/mterzolo/lego-sets/download
+Here is the link to the dataset: https://www.kaggle.com/mterzolo/lego-sets
 
 ```{r}
 lego_sets <- read.csv("lego_sets.csv")
