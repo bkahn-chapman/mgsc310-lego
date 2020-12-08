@@ -51,7 +51,7 @@ library('forcats')
 library('broom')
 ```
 
-### Cleaning the dataset and creating training and testing data sets (working on clustering ages and countries together to help the model perform better by the time we submit our final project)
+### Cleaning the dataset 
 ```{r}
 lego_sets <- read.csv("lego_sets.csv")
 
@@ -62,9 +62,6 @@ lego_clean <- lego_sets %>% select(-c(prod_long_desc,theme_name,prod_desc,set_na
   country = factor(country)
 ) %>% drop_na()
 
-lego_split <- initial_split(lego_clean, p = 0.75)
-lego_train <- training(lego_split)
-lego_test <- testing(lego_split)
 ```
 
 ### Inspecting the data set
@@ -88,9 +85,81 @@ ggplot(lego_clean, aes(ages)) +
 
 ```
 
+### Fixing ages
+
+```{r}
+
+table(lego_clean$ages)
+
+```
+
+```{r}
+
+lego_clean <- lego_clean %>% mutate(ages = recode(ages, "10-14" = "10")) %>%
+                             mutate(ages = recode(ages, "10-16" = "10")) %>%
+                             mutate(ages = recode(ages, "10-21" = "10")) %>%
+                             mutate(ages = recode(ages, "10+" = "10")) %>%
+                             mutate(ages = recode(ages, "11-16" = "11")) %>%
+                             mutate(ages = recode(ages, "12-16" = "12")) %>%
+                             mutate(ages = recode(ages, "12+" = "12")) %>%
+                             mutate(ages = recode(ages, "14+" = "14")) %>%
+                             mutate(ages = recode(ages, "16+" = "16")) %>%
+                             mutate(ages = recode(ages, "1Â½-3" = "1.5")) %>%
+                             mutate(ages = recode(ages, "1Â½-5" = "1.5")) %>%
+                             mutate(ages = recode(ages, "2-5" = "2")) %>%
+                             mutate(ages = recode(ages, "4-7" = "4")) %>%
+                             mutate(ages = recode(ages, "4-99" = "4")) %>%  
+                             mutate(ages = recode(ages, "4+" = "4")) %>%
+                             mutate(ages = recode(ages, "5-12" = "5")) %>%
+                             mutate(ages = recode(ages, "5-8" = "5")) %>%
+                             mutate(ages = recode(ages, "5+" = "5")) %>%
+                             mutate(ages = recode(ages, "6-12" = "6")) %>%
+                             mutate(ages = recode(ages, "6-14" = "6")) %>%
+                             mutate(ages = recode(ages, "6+" = "6")) %>%
+                             mutate(ages = recode(ages, "7-12" = "7")) %>%
+                             mutate(ages = recode(ages, "7-14" = "7")) %>%
+                             mutate(ages = recode(ages, "7+" = "7")) %>%
+                             mutate(ages = recode(ages, "8-12" = "8")) %>%
+                             mutate(ages = recode(ages, "8-14" = "8")) %>%
+                             mutate(ages = recode(ages, "8+" = "8")) %>%
+                             mutate(ages = recode(ages, "9-12" = "9")) %>%
+                             mutate(ages = recode(ages, "9-14" = "9")) %>%
+                             mutate(ages = recode(ages, "9-16" = "9")) %>%
+                             mutate(ages = recode(ages, "9+" = "9"))
+                              
+sorted_factors <- paste(sort(as.double(levels(lego_clean$ages))))
+lego_clean$ages <- factor(lego_clean$ages, levels = sorted_factors)
+lego_clean <-lego_clean %>% rename(minage = ages)
+
+table(lego_clean$minage)
+
+```
+
+### Checking graph again
+
+```{r}
+
+lego_clean %>% group_by(minage)
+
+ggplot(lego_clean, aes(minage)) + 
+  geom_bar() +
+  coord_flip()
+
+```
+
+### Creating training and testing data sets (working on clustering countries together to help the model perform better by the time we submit our final project)
+```{r}
+
+lego_split <- initial_split(lego_clean, p = 0.75)
+lego_train <- training(lego_split)
+lego_test <- testing(lego_split)
+
+```
+
+
 ### Creating a GLM model
 ```{r}
-glm_mod <- glm(list_price ~ ages + piece_count + num_reviews + play_star_rating + 
+glm_mod <- glm(list_price ~ minage + piece_count + num_reviews + play_star_rating + 
                  review_difficulty + star_rating + 
                   val_star_rating + country, 
            data = lego_train)
@@ -128,7 +197,7 @@ Can we get better error rates with a different model?
 
 ### Enet Model
 ```{r}
-enet_mod <- cva.glmnet(list_price ~ ages + piece_count + num_reviews + 
+enet_mod <- cva.glmnet(list_price ~ minage + piece_count + num_reviews + 
                          play_star_rating + review_difficulty + star_rating + 
                          val_star_rating + country, 
                          data = lego_train,
@@ -148,8 +217,7 @@ We determine that this is a lasso model because there is the least amount of err
 
 ### Creating the Lasso Model
 ```{r}
-lasso_mod <- cv.glmnet(list_price ~ ages + piece_count + num_reviews + play_star_rating + review_difficulty + star_rating + 
-                  val_star_rating + country, 
+lasso_mod <- cv.glmnet(list_price ~ minage + piece_count + num_reviews + play_star_rating + review_difficulty + star_rating + val_star_rating + country, 
                   data = lego_train,
                   alpha = 1)
 
@@ -202,7 +270,12 @@ There are outliers on both graphs, should we talk about those? also, it looksl i
 
 
 
-
+```{r}
 
 metrics(results_train_glm, preds, true)
+
+```
+
+
+
 
