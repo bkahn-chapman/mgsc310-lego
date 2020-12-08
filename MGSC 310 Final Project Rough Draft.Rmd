@@ -170,6 +170,8 @@ glm_mod <- glm(list_price ~ minage + piece_count + num_reviews + play_star_ratin
 ```{r}
 preds_train_glm <- predict(glm_mod,
                           newdata = lego_train)
+preds_test_glm <- predict(glm_mod,
+                          newdata = lego_test)
 ```
 
 ### Creating a results data frame
@@ -178,19 +180,36 @@ results_train_glm <- data.frame(
   preds = preds_train_glm,
   true = lego_train$list_price
 )
+
+results_test_glm <- data.frame(
+  preds = preds_test_glm,
+  true = lego_test$list_price
+)
 ```
 
-### Plotting the true and predicted values
+### Plotting the true and predicted values for train
 ```{r}
 ggplot(results_train_glm, 
        aes(x = true, y = preds)) +
   geom_point(alpha = 1/2, size = 4) +
-  geom_smooth(color = "red")
+  geom_smooth(color = "red")+
+  labs(title = "Train")
+```
+```{r}
+ggplot(results_test_glm, 
+       aes(x = true, y = preds)) +
+  geom_point(alpha = 1/2, size = 4) +
+  geom_smooth(color = "red") +
+  labs(title="Test")
 ```
 
 ### Evaluating the metrics
 ```{r}
 metrics(results_train_glm, preds, true)
+```
+
+```{r}
+metrics(results_test_glm, preds, true)
 ```
 
 Can we get better error rates with a different model?
@@ -240,6 +259,8 @@ It appears that the 'ages' variable is the most influential to the model because
 ```{r}
 preds_train_lasso <- predict(lasso_mod,
                           newdata = lego_train)
+preds_test_lasso <- predict(lasso_mod,
+                           newdata = lego_test)
 ```
 
 ### Creating a results data frame
@@ -248,12 +269,24 @@ results_train_lasso <- data.frame(
   preds = preds_train_lasso,
   true = lego_train$list_price
 )
+
+results_test_lasso <- data.frame(
+  preds = preds_test_lasso,
+  true = lego_test$list_price
+)
 ```
 
 
 
 ```{r}
 metrics(results_train_lasso, X1, true)
+# fix this, for some reason preds is X1
+
+```
+
+
+```{r}
+metrics(results_test_lasso, X1, true)
 # fix this, for some reason preds is X1
 
 ```
