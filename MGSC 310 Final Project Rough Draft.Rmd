@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ---
 title: "MGSC 310 Final Project Rough Draft"
 output: html_document
@@ -279,3 +280,286 @@ metrics(results_train_glm, preds, true)
 
 
 
+=======
+---
+title: "MGSC 310 Final Project Rough Draft"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+# As long as you are working in a Rstudio Project file, you shouldn't need to 'hard code' directories like this 
+# change to your own working directory
+# knitr::opts_knit$set(root.dir = 'C:/Users/hersh/Dropbox/Chapman/Teaching/MGSC_310/Fall_2019/problem_sets')
+# setwd('C:/Users/hersh/Dropbox/Chapman/Teaching/MGSC_310/Fall_2019/problem_sets')
+
+# set seed to your own favorite number
+set.seed(1818)
+options(width=70)
+options(scipen=99)
+rm(list = ls())
+
+# general rchunk code options
+
+# this sets text to small
+opts_chunk$set(tidy.opts=list(width.wrap=50),tidy=TRUE, size = "vsmall")  
+opts_chunk$set(message = FALSE,                                          
+               warning = FALSE,
+               # "caching" stores objects in code chunks and only rewrites if you change things
+               cache = TRUE,                               
+               # automatically downloads dependency files
+               autodep = TRUE,
+               # 
+               cache.comments = FALSE,
+               # 
+               collapse = TRUE,
+               fig.width = 5,  
+               fig.height = 4,
+               fig.align='center')
+```
+
+### Importing Libraries
+```{r}
+library(magrittr)
+library('rsample')
+library('tidyverse')
+library('ISLR')
+library('yardstick')
+library('ggplot2')
+library('plotROC')
+library('rsample')
+library('glmnet')
+library('glmnetUtils')
+library('forcats')
+library('broom')
+```
+
+### Cleaning the dataset 
+```{r}
+lego_sets <- read.csv("lego_sets.csv")
+
+lego_clean <- lego_sets %>% select(-c(prod_long_desc,theme_name,prod_desc,set_name)) %>% 
+  mutate(
+  ages = factor(ages),
+  review_difficulty = factor(review_difficulty), 
+  country = factor(country)
+) %>% drop_na()
+
+```
+
+### Inspecting the data set
+```{r}
+lego_clean
+
+lego_clean %>% glimpse()
+
+summary(lego_clean)
+
+
+```
+```{r}
+
+lego_clean %>% group_by(ages)
+
+ggplot(lego_clean, aes(ages)) + 
+  geom_bar() +
+  coord_flip()
+#should we keep this graph?
+
+```
+
+### Fixing ages
+
+```{r}
+
+table(lego_clean$ages)
+
+```
+
+```{r}
+
+lego_clean <- lego_clean %>% mutate(ages = recode(ages, "10-14" = "10")) %>%
+                             mutate(ages = recode(ages, "10-16" = "10")) %>%
+                             mutate(ages = recode(ages, "10-21" = "10")) %>%
+                             mutate(ages = recode(ages, "10+" = "10")) %>%
+                             mutate(ages = recode(ages, "11-16" = "11")) %>%
+                             mutate(ages = recode(ages, "12-16" = "12")) %>%
+                             mutate(ages = recode(ages, "12+" = "12")) %>%
+                             mutate(ages = recode(ages, "14+" = "14")) %>%
+                             mutate(ages = recode(ages, "16+" = "16")) %>%
+                             mutate(ages = recode(ages, "1Â½-3" = "1.5")) %>%
+                             mutate(ages = recode(ages, "1Â½-5" = "1.5")) %>%
+                             mutate(ages = recode(ages, "2-5" = "2")) %>%
+                             mutate(ages = recode(ages, "4-7" = "4")) %>%
+                             mutate(ages = recode(ages, "4-99" = "4")) %>%  
+                             mutate(ages = recode(ages, "4+" = "4")) %>%
+                             mutate(ages = recode(ages, "5-12" = "5")) %>%
+                             mutate(ages = recode(ages, "5-8" = "5")) %>%
+                             mutate(ages = recode(ages, "5+" = "5")) %>%
+                             mutate(ages = recode(ages, "6-12" = "6")) %>%
+                             mutate(ages = recode(ages, "6-14" = "6")) %>%
+                             mutate(ages = recode(ages, "6+" = "6")) %>%
+                             mutate(ages = recode(ages, "7-12" = "7")) %>%
+                             mutate(ages = recode(ages, "7-14" = "7")) %>%
+                             mutate(ages = recode(ages, "7+" = "7")) %>%
+                             mutate(ages = recode(ages, "8-12" = "8")) %>%
+                             mutate(ages = recode(ages, "8-14" = "8")) %>%
+                             mutate(ages = recode(ages, "8+" = "8")) %>%
+                             mutate(ages = recode(ages, "9-12" = "9")) %>%
+                             mutate(ages = recode(ages, "9-14" = "9")) %>%
+                             mutate(ages = recode(ages, "9-16" = "9")) %>%
+                             mutate(ages = recode(ages, "9+" = "9"))
+                              
+sorted_factors <- paste(sort(as.double(levels(lego_clean$ages))))
+lego_clean$ages <- factor(lego_clean$ages, levels = sorted_factors)
+lego_clean <-lego_clean %>% rename(minage = ages)
+
+table(lego_clean$minage)
+
+```
+
+### Checking graph again
+
+```{r}
+
+lego_clean %>% group_by(minage)
+
+ggplot(lego_clean, aes(minage)) + 
+  geom_bar() +
+  coord_flip()
+
+```
+
+### Creating training and testing data sets (working on clustering countries together to help the model perform better by the time we submit our final project)
+```{r}
+
+lego_split <- initial_split(lego_clean, p = 0.75)
+lego_train <- training(lego_split)
+lego_test <- testing(lego_split)
+
+```
+
+
+### Creating a GLM model
+```{r}
+glm_mod <- glm(list_price ~ minage + piece_count + num_reviews + play_star_rating + 
+                 review_difficulty + star_rating + 
+                  val_star_rating + country, 
+           data = lego_train)
+```
+
+### Generating predictions
+```{r}
+preds_train_glm <- predict(glm_mod,
+                          newdata = lego_train)
+```
+
+### Creating a results data frame
+```{r}
+results_train_glm <- data.frame(
+  preds = preds_train_glm,
+  true = lego_train$list_price
+)
+```
+
+### Plotting the true and predicted values
+```{r}
+ggplot(results_train_glm, 
+       aes(x = true, y = preds)) +
+  geom_point(alpha = 1/2, size = 4) +
+  geom_smooth(color = "red")
+```
+
+### Evaluating the metrics
+```{r}
+metrics(results_train_glm, preds, true)
+```
+
+Can we get better error rates with a different model?
+
+
+### Enet Model
+```{r}
+enet_mod <- cva.glmnet(list_price ~ minage + piece_count + num_reviews + 
+                         play_star_rating + review_difficulty + star_rating + 
+                         val_star_rating + country, 
+                         data = lego_train,
+                       alpha = seq(0,1, by = 0.05))
+
+plot(enet_mod)
+```
+
+
+### Minloss plot to determine Lasso vs. Ridge
+```{r}
+minlossplot(enet_mod, 
+            cv.type = "min")
+```
+
+We determine that this is a lasso model because there is the least amount of error when alpha is equal to 1.  This means that only a few of the variables we chose are highly influential to the model.
+
+### Creating the Lasso Model
+```{r}
+lasso_mod <- cv.glmnet(list_price ~ minage + piece_count + num_reviews + play_star_rating + review_difficulty + star_rating + val_star_rating + country, 
+                  data = lego_train,
+                  alpha = 1)
+
+plot(lasso_mod)
+```
+lambda.1se does not increase the mean-squared error much compared to lambda.min.  As such, we would choose the lambda.1se value for lambda in order to increase the shrinkage in our model.
+
+### Which variables are the most influential?
+```{r}
+library(coefplot)
+coefpath(lasso_mod)
+```
+It appears that the 'ages' variable is the most influential to the model because it shrinks last.
+
+
+
+
+### Generating predictions for lasso
+```{r}
+preds_train_lasso <- predict(lasso_mod,
+                          newdata = lego_train)
+```
+
+### Creating a results data frame
+```{r}
+results_train_lasso <- data.frame(
+  preds = preds_train_lasso,
+  true = lego_train$list_price
+)
+```
+
+
+
+```{r}
+metrics(results_train_lasso, X1, true)
+# fix this, for some reason preds is X1
+
+```
+
+```{r}
+ggplot(results_train_lasso, 
+       aes(x = true, y = X1)) +
+  geom_point(alpha = 1/2, size = 4) +
+  geom_smooth(color = "red")
+```
+
+The graph looks the same?
+
+There are outliers on both graphs, should we talk about those? also, it looksl ike there are some predictions that level off around $400 when the real value is 900.  What could cause this?
+
+
+
+```{r}
+
+metrics(results_train_glm, preds, true)
+
+```
+
+
+
+
+>>>>>>> 82db6483d02fd204cf16f5c9506cc817022df89d
