@@ -159,6 +159,8 @@ lego_test <- testing(lego_split)
 
 
 ### Creating a GLM model
+
+# FIX THIS, MAKE IT JUST A LM
 ```{r}
 glm_mod <- glm(list_price ~ minage + piece_count + num_reviews + play_star_rating + 
                  review_difficulty + star_rating + 
@@ -192,7 +194,7 @@ results_test_glm <- data.frame(
 ggplot(results_train_glm, 
        aes(x = true, y = preds)) +
   geom_point(alpha = 1/2, size = 4) +
-  geom_smooth(color = "red")+
+  geom_smooth(color = "red")+ #SHOULD THIS BE A LINEAR LINE INSTEAD?
   labs(title = "Train")
 ```
 ```{r}
