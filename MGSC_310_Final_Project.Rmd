@@ -1,7 +1,11 @@
-<<<<<<< HEAD
 ---
-title: "MGSC 310 Final Project Rough Draft"
-output: html_document
+title: "MGSC 310 - Final Project"
+author: "Grace Montgomery and Ben Kahn"
+subtitle: MGSC 310 Problem Set Template
+output:
+  html_document:
+    df_print: paged
+  html_notebook: default
 ---
 
 ```{r setup, include=FALSE}
