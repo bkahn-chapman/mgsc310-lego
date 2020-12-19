@@ -88,7 +88,6 @@ lego_clean %>% group_by(ages)
 ggplot(lego_clean, aes(ages)) + 
   geom_bar() +
   coord_flip()
-#should we keep this graph?
 
 ```
 
@@ -199,7 +198,7 @@ results_test_glm <- data.frame(
 ggplot(results_train_glm, 
        aes(x = true, y = preds)) +
   geom_point(alpha = 1/2, size = 4) +
-  geom_smooth(color = "red")+ #SHOULD THIS BE A LINEAR LINE INSTEAD?
+  geom_smooth(color = "red")+ 
   labs(title = "Train")
 ```
 ```{r}
@@ -270,9 +269,6 @@ coefpath(lasso_mod)
 ```
 It appears that the 'ages' variable is the most influential to the model because it shrinks last.
 
-
-
-
 ### Generating predictions for lasso
 ```{r}
 preds_train_lasso <- predict(lasso_mod,
@@ -298,14 +294,12 @@ results_test_lasso <- data.frame(
 ### Results of the lasso training set.
 ```{r}
 metrics(results_train_lasso, X1, true)
-# fix this, for some reason preds is X1
 
 ```
 
 ### Results of the lasso testing set.
 ```{r}
 metrics(results_test_lasso, X1, true)
-# fix this, for some reason preds is X1
 
 ```
 
